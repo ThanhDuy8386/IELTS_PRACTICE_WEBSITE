@@ -84,11 +84,15 @@ namespace IELTS_PRACTICE
             builder.Services.AddScoped<AuthService>();
             builder.Services.AddScoped<MediaService>();
 
+            var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                ?? ["http://localhost:5173"];
+
             // CORS for browser to call API
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontend", policy =>
-                    policy.WithOrigins("http://localhost:5173")
+                    policy.WithOrigins(allowedOrigins)
                           .AllowAnyHeader()
                           .AllowAnyMethod());
             });
@@ -115,6 +119,13 @@ namespace IELTS_PRACTICE
             ExcelPackage.License.SetNonCommercialPersonal("<ThanhDuy>");
             var app = builder.Build();
 
+            if (app.Configuration.GetValue("ApplyMigrationsOnStartup", false))
+            {
+                using var scope = app.Services.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
+            }
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -139,7 +150,11 @@ namespace IELTS_PRACTICE
             });
             // --- END FILE UPLOAD SETUP ---
 
-            app.UseHttpsRedirection();
+            var useHttpsRedirection = builder.Configuration.GetValue("UseHttpsRedirection", true);
+            if (useHttpsRedirection)
+            {
+                app.UseHttpsRedirection();
+            }
 
             app.UseCors("AllowFrontend");
 
@@ -147,6 +162,7 @@ namespace IELTS_PRACTICE
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
             app.MapControllers();
 
             app.Run();
