@@ -72,16 +72,14 @@ mysql:3306             -> internal only
 
 ---
 
-## Phase 3 - AWS Networking
+## Phase 3 - AWS Networking With Default VPC
 
-- [ ] Create VPC, for example `10.0.0.0/16`.
-- [ ] Create public subnet, for example `10.0.1.0/24`.
-- [ ] Create Internet Gateway.
-- [ ] Attach Internet Gateway to VPC.
-- [ ] Create public route table.
-- [ ] Add route `0.0.0.0/0 -> Internet Gateway`.
-- [ ] Associate route table with public subnet.
-- [ ] Create EC2 Security Group.
+Use the AWS Default VPC for this mono app lab.
+
+- [ ] Open the EC2 console.
+- [ ] Confirm the selected Region has a Default VPC.
+- [ ] Use a default public subnet when launching EC2.
+- [ ] Create a dedicated EC2 Security Group for this lab.
 
 Inbound rules:
 
@@ -103,7 +101,7 @@ Do not expose:
 
 ## Phase 4 - EC2 Setup
 
-- [ ] Launch EC2 in public subnet.
+- [ ] Launch EC2 in a Default VPC public subnet.
 - [ ] Use free-tier eligible/small instance if possible.
 - [ ] Use Amazon Linux 2023 or Ubuntu LTS.
 - [ ] Configure 20-30 GB gp3 EBS.
@@ -168,7 +166,7 @@ https://api.example.com  -> ASP.NET API
 
 ## Phase 7 - MySQL Strategy
 
-Mode A - MySQL container on EC2:
+Use MySQL container on the EC2 host through Docker Compose.
 
 - [ ] Use MySQL Docker image.
 - [ ] Store data in Docker volume or host-mounted path.
@@ -177,45 +175,9 @@ Mode A - MySQL container on EC2:
 - [ ] Test CRUD from app.
 - [ ] Export backup with `mysqldump`.
 
-Mode B - Optional RDS MySQL experiment:
-
-- [ ] Verify free-tier/credit eligibility.
-- [ ] Create DB subnet group.
-- [ ] Create small Single-AZ RDS MySQL.
-- [ ] Disable public access.
-- [ ] Allow 3306 only from EC2 Security Group.
-- [ ] Update backend connection string.
-- [ ] Run migrations.
-- [ ] Test app.
-- [ ] Delete RDS after experiment.
-- [ ] Delete final snapshot if not needed.
-
 ---
 
-## Phase 8 - Optional S3
-
-Use only if needed for frontend hosting practice or app file uploads.
-
-Frontend static hosting:
-
-- [ ] Build frontend.
-- [ ] Upload build output to S3.
-- [ ] Optionally put CloudFront in front.
-- [ ] Configure custom domain/HTTPS if practicing this path.
-
-Application uploads:
-
-- [ ] Create S3 bucket.
-- [ ] Keep public access blocked unless intentionally needed.
-- [ ] Attach IAM role to EC2.
-- [ ] Grant minimum S3 permissions.
-- [ ] Configure app to use IAM role.
-- [ ] Test upload/read/delete.
-- [ ] Add lifecycle rule if useful.
-
----
-
-## Phase 9 - ECR
+## Phase 8 - ECR
 
 - [ ] Create ECR repository for API image.
 - [ ] Optionally create ECR repository for frontend image.
@@ -229,19 +191,7 @@ Application uploads:
 
 ---
 
-## Phase 10 - CloudWatch
-
-- [ ] Create log group for API.
-- [ ] Send app/container logs to CloudWatch if practicing log integration.
-- [ ] Set log retention, for example 7 or 14 days.
-- [ ] Monitor EC2 CPU/network/status checks.
-- [ ] Optionally install CloudWatch Agent for memory/disk metrics.
-- [ ] Create simple dashboard.
-- [ ] Create basic alarm for EC2 status check failure.
-
----
-
-## Phase 11 - CI
+## Phase 9 - CI
 
 - [ ] Create `.github/workflows/ci.yml`.
 - [ ] Trigger on pull request.
@@ -253,7 +203,7 @@ Application uploads:
 
 ---
 
-## Phase 12 - GitHub Actions To AWS With OIDC
+## Phase 10 - GitHub Actions To AWS With OIDC
 
 - [ ] Create GitHub OIDC provider in AWS IAM.
 - [ ] Create deployment IAM role.
@@ -265,7 +215,7 @@ Application uploads:
 
 ---
 
-## Phase 13 - CD To EC2
+## Phase 11 - CD To EC2
 
 - [ ] Build image in GitHub Actions.
 - [ ] Push image to ECR with commit SHA tag.
@@ -283,7 +233,7 @@ docker compose up -d
 
 ---
 
-## Phase 14 - Optional ECS With EC2 Capacity
+## Phase 12 - Optional ECS With EC2 Capacity
 
 Do this only after EC2 + Docker Compose is clear.
 
@@ -291,7 +241,6 @@ Do this only after EC2 + Docker Compose is clear.
 - [ ] Register EC2 as ECS capacity.
 - [ ] Create API task definition.
 - [ ] Configure environment variables.
-- [ ] Configure CloudWatch logs.
 - [ ] Create ECS service with desired count 1.
 - [ ] Deploy image from ECR.
 - [ ] Kill task and verify ECS replaces it.
@@ -327,23 +276,14 @@ EC2:
 - [ ] Delete snapshots not needed.
 - [ ] Release Elastic IP if created.
 
-RDS:
-
-- [ ] Delete RDS instance if used.
-- [ ] Delete final snapshot if not needed.
-- [ ] Delete DB subnet group if unused.
-
 Networking:
 
 - [ ] Delete Security Groups.
-- [ ] Delete route table/subnet/VPC if no longer needed.
 - [ ] Delete Route 53 hosted zone if created and unused.
 
-Storage/observability:
+Storage:
 
-- [ ] Empty/delete S3 bucket if used.
 - [ ] Delete unused ECR images/repositories.
-- [ ] Delete CloudWatch log groups or reduce retention.
 - [ ] Review Cost Explorer.
 
 ---

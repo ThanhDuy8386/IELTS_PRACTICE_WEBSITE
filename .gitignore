@@ -364,3 +364,4 @@ FodyWeavers.xsd
 Backend/IELTS_PRACTICE/appsettings.json
 
 Backend/IELTS_PRACTICE/UploadedFiles/*
+/.env
