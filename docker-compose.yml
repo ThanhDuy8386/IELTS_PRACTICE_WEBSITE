@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      # These variables are read by the official MySQL image on first startup.
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE is required}
+      MYSQL_USER: ${MYSQL_USER:?MYSQL_USER is required}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./Backend/IELTS_PRACTICE
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      UseHttpsRedirection: "false"
+      ApplyMigrationsOnStartup: "true"
+      ConnectionStrings__DefaultConnection: server=mysql;port=3306;database=${MYSQL_DATABASE:?MYSQL_DATABASE is required};user=${MYSQL_USER:?MYSQL_USER is required};password=${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}
+      JwtSettings__Key: ${JWT_KEY:?JWT_KEY is required}
+    volumes:
+      - ./Backend/IELTS_PRACTICE/UploadedFiles:/app/UploadedFiles
+
+  web:
+    build:
+      context: ./Frontend/ielts-app
+      dockerfile: Dockerfile
+      args:
+        # Empty means the React app calls same-origin /api, then Nginx proxies it to the API container.
+        VITE_API_BASE: ${VITE_API_BASE?VITE_API_BASE must be declared in .env. Leave it empty for same-origin /api.}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:?WEB_PORT is required}:80"
+
+volumes:
+  mysql-data:
